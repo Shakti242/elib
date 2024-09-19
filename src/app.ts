@@ -1,14 +1,17 @@
-import express, { NextFunction, Response } from 'express'
-import { Request } from 'express';
-import { HttpError } from 'http-errors';
+import express from 'express'
+import createHttpError from 'http-errors';
+import globalErrorHandler from './config/middlewares/globalErrorHandler';
+import userRouter from './user/userRouter';
 
 const app = express();
 //Routes 
 app.get('/', (req, res) => {
+    throw new Error("something went wrong");
+    const error = createHttpError(400, "Something went wrong");
+    throw error;
     res.json({ message: "Welcome to elibs apis" });
 })
-app.use((err: HttpError, req:Request , res: Response, next: NextFunction) => {
+app.use('/api/users', userRouter);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const statusCode = err.statusCode || 500;
-});
+app.use(globalErrorHandler);
 export default app;
