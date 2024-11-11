@@ -7,11 +7,7 @@ import globalErrorHandler from "./config/middlewares/globalErrorHandler";
 
 const app = express();
 
-// app.use(
-//     cors({
-//         origin: config.frontendDomain,
-//     })
-// );
+
 
 app.use(express.json());
 

@@ -3,8 +3,6 @@ import { config } from "./config";
 
 const connectDB = async () => {
     try {
-        console.log("hello................................................................")
-        console.log(process.env.NODEENV);
 
         // Wait for the connection
         await mongoose.connect(config.databaseUrl as string);
