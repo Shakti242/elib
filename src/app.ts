@@ -1,18 +1,30 @@
-import express from 'express'
-// import createHttpError from 'http-errors';
-import globalErrorHandler from './config/middlewares/globalErrorHandler';
-import userRouter from './user/userRouter';
+import express, { NextFunction, Request, Response } from "express";
+import cors from "cors";
+import userRouter from "./user/userRouter";
+import bookRouter from "./book/bookRouter";
+import { config } from "./config/config";
+import globalErrorHandler from "./config/middlewares/globalErrorHandler";
 
 const app = express();
+
+// app.use(
+//     cors({
+//         origin: config.frontendDomain,
+//     })
+// );
+
 app.use(express.json());
-//Routes 
-app.get('/', (_req, res) => {
-    res.json({ message: "Welcome to elibs apis" });
+
+// Routes
+// Http methods: GET, POST, PUT, PATCH, DELETE
+app.get("/", (req, res, next) => {
+    res.json({ message: "Welcome to elib apis" });
 });
 
+app.use("/api/users", userRouter);
+app.use("/api/books", bookRouter);
 
-
-app.use('/api/users', userRouter);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// Global error handler
 app.use(globalErrorHandler);
+
 export default app;
