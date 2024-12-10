@@ -1,11 +1,11 @@
 import path from "node:path";
 import fs from "node:fs";
 import { Request, Response, NextFunction } from "express";
+import cloudinary from "../config/cloudinary";
 import createHttpError from "http-errors";
 import bookModel from "./bookModel";
 import userModel from "../user/userModel";
 import { AuthRequest } from "../config/middlewares/authenticate";
-import cloudinary from "../config/cloudinary";
 
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
     const { title, genre, description } = req.body;

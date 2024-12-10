@@ -5,86 +5,106 @@ import bcrypt from "bcrypt";
 import userModel from "./userModel";
 import { sign } from "jsonwebtoken";
 import { config } from "../config/config";
-import { User } from "./userTypes";
 
-const createUser = async (req: Request, res: Response, next: NextFunction) => {
-  const { name, email, password } = req.body;
+/**
+ * Controller to create a new user.
+ */
+const createUsers = async (req: Request, res: Response, next: NextFunction) => {
+  const users = req.body; // Expecting an array of user objects
 
-  // Validation
-  if (!name || !email || !password) {
-    const error = createHttpError(400, "All fields are required");
-    return next(error);
+  // Validation: Check if the body contains an array and if it’s not empty
+  if (!Array.isArray(users) || users.length === 0) {
+    return next(createHttpError(400, "At least one user is required"));
   }
 
-  // Database call.
   try {
-    const user = await userModel.findOne({ email });
-    if (user) {
-      const error = createHttpError(
-        400,
-        "User already exists with this email."
-      );
-      return next(error);
+    const createdUsers = [];
+
+    // Loop over the users array and create each user
+    for (const user of users) {
+      const { name, email, password } = user;
+
+      // Validate individual user fields
+      if (!name || !email || !password) {
+        return next(createHttpError(400, "All fields (name, email, password) are required"));
+      }
+
+      // Check if email format is valid using regex
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(email)) {
+        return next(createHttpError(400, "Invalid email format"));
+      }
+
+      // Check if user already exists
+      const existingUser = await userModel.findOne({ email });
+      if (existingUser) {
+        return next(createHttpError(400, `User already exists with email: ${email}`));
+      }
+
+      // Hash the password before saving
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create the new user
+      const newUser = await userModel.create({
+        name,
+        email,
+        password: hashedPassword,
+      });
+
+      createdUsers.push(newUser);
     }
+
+    // Respond with the created users
+    res.status(201).json({ users: createdUsers });
   } catch (err) {
-    return next(createHttpError(500, "Error while getting user"));
-  }
-
-  /// password -> hash
-
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  let newUser: User;
-  try {
-    newUser = await userModel.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-  } catch (err) {
-    return next(createHttpError(500, "Error while creating user."));
-  }
-
-  try {
-    // Token generation JWT
-    const token = sign({ sub: newUser._id }, config.jwtSecret as string, {
-      expiresIn: "7d",
-      algorithm: "HS256",
-    });
-    // Response
-    res.status(201).json({ accessToken: token });
-  } catch (err) {
-    return next(createHttpError(500, "Error while signing the jwt token"));
+    console.error("Error while creating users:", err);
+    return next(createHttpError(500, "Error while creating users"));
   }
 };
 
+/**
+ * Controller to login a user.
+ */
 const loginUser = async (req: Request, res: Response, next: NextFunction) => {
   const { email, password } = req.body;
 
+  // Validate input
   if (!email || !password) {
-    return next(createHttpError(400, "All fields are required"));
+    return next(createHttpError(400, "Email and password are required"));
   }
 
-  // todo: wrap in try catch.
-  const user = await userModel.findOne({ email });
-  if (!user) {
-    return next(createHttpError(404, "User not found."));
+  try {
+    // Validate email format
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      return next(createHttpError(400, "Invalid email format"));
+    }
+
+    // Find the user by email
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return next(createHttpError(404, "User not found"));
+    }
+
+    // Check if the password is valid
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return next(createHttpError(401, "Invalid email or password"));
+    }
+
+    // Generate JWT token
+    const token = sign({ sub: user._id }, config.jwtSecret as string, {
+      expiresIn: "7d", // Token expiry of 7 days
+      algorithm: "HS256", // JWT algorithm
+    });
+
+    // Return the token to the client
+    res.status(200).json({ accessToken: token });
+
+  } catch (error) {
+    console.error("Error during login:", error);
+    return next(createHttpError(500, "Error during login"));
   }
-
-  const isMatch = await bcrypt.compare(password, user.password);
-
-  if (!isMatch) {
-    return next(createHttpError(400, "Username or password incorrect!"));
-  }
-
-  // todo: handle errors
-  // Create accesstoken
-  const token = sign({ sub: user._id }, config.jwtSecret as string, {
-    expiresIn: "7d",
-    algorithm: "HS256",
-  });
-
-  res.json({ accessToken: token });
 };
 
-export { createUser, loginUser };
+export { createUsers, loginUser };

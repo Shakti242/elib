@@ -5,22 +5,32 @@ import bookRouter from "./book/bookRouter";
 import { config } from "./config/config";
 import globalErrorHandler from "./config/middlewares/globalErrorHandler";
 
+// Initialize the Express app
 const app = express();
 
+// Apply CORS middleware with frontend domain configuration
+app.use(
+    cors({
+        origin: config.frontendDomain,
+    })
+);
 
-
+// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Routes
-// Http methods: GET, POST, PUT, PATCH, DELETE
-app.get("/", (req, res, next) => {
-    res.json({ message: "Welcome to elib apis" });
+// Welcome route to confirm the server is running
+app.get("/", (req: Request, res: Response) => {
+    res.json({ message: "Welcome to elib APIs" });
 });
 
+// User-related routes
 app.use("/api/users", userRouter);
+
+// Book-related routes
 app.use("/api/books", bookRouter);
 
-// Global error handler
+// Global error handler middleware (handles any unhandled errors)
 app.use(globalErrorHandler);
 
+// Export the app for use in the server setup
 export default app;

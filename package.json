@@ -1,11 +1,12 @@
 {
   "name": "elib",
   "version": "1.0.0",
-  "description": "This is a ebook api project",
+  "description": "This is an ebook api project",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon server.ts",
     "build": "tsc",
+    "start": "node dist/server.js",
     "docker:publish": "docker build -t codersgyan/elib-backend:v2 --platform linux/amd64 . && docker push codersgyan/elib-backend:v2"
   },
   "keywords": [
@@ -17,7 +18,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/dotenv": "^8.2.0",
+    "@types/dotenv": "^8.2.3",
     "@types/express": "^4.17.21",
     "@types/http-errors": "^2.0.4",
     "@types/jsonwebtoken": "^9.0.7",
