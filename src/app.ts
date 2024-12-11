@@ -1,9 +1,9 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import userRouter from "./user/userRouter";
-import bookRouter from "./book/bookRouter";
 import { config } from "./config/config";
 import globalErrorHandler from "./config/middlewares/globalErrorHandler";
+import bookRouter from "./book/bookRouter";
 
 // Initialize the Express app
 const app = express();
